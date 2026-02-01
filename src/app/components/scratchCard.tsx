@@ -174,7 +174,7 @@ export default function ScratchCardComponent() {
               justifyContent: "center",
             }}
           >
-            <Image src={"/cat.gif"} width={300} height={300} alt="You Won!" />
+            <Image className="gif" src={"/cat.gif"} width={300} height={300} alt="You Won!" />
           </div>
         </ScratchCard>
       )}
