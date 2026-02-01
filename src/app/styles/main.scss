@@ -1,14 +1,19 @@
 @use "@/styles/forwarder" as *;
 
 main {
+  padding: 16px 0;
   width: 100%;
   min-height: 100vh;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  gap: 60px;
+  justify-content: space-evenly;
+
+  @include media-breakpoint-up(md) {
+    justify-content: center;
+    gap: 60px;
+  }
 
   .ticket-container {
     position: relative;
@@ -18,11 +23,57 @@ main {
       url("/cursor/coin-60.png") 0 0,
       auto !important;
 
+    @include media-breakpoint-down(md) {
+      width: 150%;
+      margin-right: 160px;
+    }
+
     .ticket {
       width: min(1200px, 100%);
       height: auto;
       display: block;
       user-select: none !important;
+    }
+  }
+
+  .info-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    .label {
+      color: var(--gray-02);
+    }
+
+    .ticket-number {
+      font-size: toRem(24px);
+    }
+
+    svg {
+      width: 30px;
+      height: 30px;
+      transition:
+        transform 0.12s ease,
+        filter 0.12s ease;
+      cursor: pointer;
+
+      &:hover {
+        transform: scale(1.05);
+
+        path {
+          fill: var(--gray-01);
+        }
+      }
+
+      &:active {
+        transform: scale(0.92);
+      }
+
+      path {
+        fill: var(--gray-02);
+      }
     }
   }
 }

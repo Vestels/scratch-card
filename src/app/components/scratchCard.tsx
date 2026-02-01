@@ -2,7 +2,7 @@
 
 import ScratchCard from "react-scratchcard-v4";
 import { useEffect, useMemo, useRef, useState } from "react";
-import Image from "next/image";
+import LoadingComponent from "./loading";
 
 type Size = { w: number; h: number };
 
@@ -13,6 +13,7 @@ export default function ScratchCardComponent() {
   const isScratchingRef = useRef(false);
 
   const [size, setSize] = useState<Size | null>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
 
   const isMobile = (size?.w ?? 0) < 768;
 
@@ -22,6 +23,19 @@ export default function ScratchCardComponent() {
   }, [isMobile, size?.w]);
 
   const brushHeight = Math.max(8, Math.round(brushWidth * 0.85));
+
+  const scratchCompleted = () => {
+    const a = audioRef.current;
+    if (a) {
+      try {
+        a.pause();
+        a.currentTime = 0;
+      } catch {}
+    }
+    isScratchingRef.current = false;
+
+    setShowConfetti(true);
+  };
 
   useEffect(() => {
     const a = new Audio("/sound/coin.mp3");
@@ -140,7 +154,9 @@ export default function ScratchCardComponent() {
       ref={hostRef}
       style={{ width: "100%", height: "100%" }}
     >
-      {!ready ? null : (
+      {!ready ? (
+        <LoadingComponent />
+      ) : (
         <ScratchCard
           key={`${size.w}x${size.h}`}
           width={size.w}
@@ -153,17 +169,7 @@ export default function ScratchCardComponent() {
             width: brushWidth,
             height: brushHeight,
           }}
-          onComplete={() => {
-            const a = audioRef.current;
-            if (a) {
-              try {
-                a.pause();
-                a.currentTime = 0;
-              } catch {}
-            }
-            isScratchingRef.current = false;
-            console.log("complete");
-          }}
+          onComplete={() => scratchCompleted()}
         >
           <div
             style={{
@@ -174,9 +180,16 @@ export default function ScratchCardComponent() {
               justifyContent: "center",
             }}
           >
-            <Image className="gif" src={"/cat.gif"} width={300} height={300} alt="You Won!" />
+            <p>You won!</p>
           </div>
         </ScratchCard>
+      )}
+
+      {showConfetti && (
+        <iframe
+          className="confetti"
+          src="https://lottie.host/embed/37b508f5-d4f8-4236-a3ad-239b6b0e337b/sVF0IWmhNU.lottie"
+        ></iframe>
       )}
     </div>
   );
