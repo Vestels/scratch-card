@@ -1,28 +1,39 @@
 "use client";
 
 import ScratchCard from "react-scratchcard-v4";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
+
+type Size = { w: number; h: number };
 
 export default function ScratchCardComponent() {
   const hostRef = useRef<HTMLDivElement>(null);
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [size, setSize] = useState({ w: 230, h: 165 });
+  const isScratchingRef = useRef(false);
 
-  const isMobile = size.w < 768;
+  const [size, setSize] = useState<Size | null>(null);
 
-  const brushWidth = Math.round(isMobile ? size.w / 12 : size.w / 8);
+  const isMobile = (size?.w ?? 0) < 768;
 
-  const brushHeight = Math.round(brushWidth * 0.85);
+  const brushWidth = useMemo(() => {
+    const w = size?.w ?? 0;
+    return Math.max(8, Math.round(isMobile ? w / 12 : w / 8));
+  }, [isMobile, size?.w]);
+
+  const brushHeight = Math.max(8, Math.round(brushWidth * 0.85));
 
   useEffect(() => {
-    const audio = new Audio("/sound/coin.mp3");
-    audio.loop = true;
-    audio.volume = 0.25;
-    audioRef.current = audio;
+    const a = new Audio("/sound/coin.mp3");
+    a.loop = true;
+    a.volume = 0.25;
+    audioRef.current = a;
 
     return () => {
-      audio.pause();
+      try {
+        a.pause();
+        a.currentTime = 0;
+      } catch {}
       audioRef.current = null;
     };
   }, []);
@@ -31,43 +42,97 @@ export default function ScratchCardComponent() {
     const el = hostRef.current;
     if (!el) return;
 
-    const ro = new ResizeObserver(() => {
+    const update = () => {
       const r = el.getBoundingClientRect();
-      setSize({ w: Math.round(r.width), h: Math.round(r.height) });
-    });
+      const w = Math.round(r.width);
+      const h = Math.round(r.height);
+      if (w > 0 && h > 0) setSize({ w, h });
+    };
 
+    update();
+
+    const ro = new ResizeObserver(() => update());
     ro.observe(el);
 
-    const attach = () => {
-      const canvas = document.querySelector(".ticket-container");
-      if (!canvas || !audioRef.current) return;
+    return () => ro.disconnect();
+  }, []);
 
-      const play = () => {
-        const a = audioRef.current!;
-        if (a.paused) a.play().catch(() => {});
-      };
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
 
-      const stop = () => {
-        const a = audioRef.current!;
+    let raf = 0;
+    let attempts = 0;
+    let cleanupFn: (() => void) | null = null;
+
+    const play = () => {
+      const a = audioRef.current;
+      if (!a) return;
+      if (isScratchingRef.current) return;
+      isScratchingRef.current = true;
+
+      a.play().catch(() => {});
+    };
+
+    const stop = () => {
+      const a = audioRef.current;
+      if (!a) return;
+      if (!isScratchingRef.current) return;
+      isScratchingRef.current = false;
+
+      try {
         a.pause();
         a.currentTime = 0;
-      };
-
-      canvas.addEventListener("mousedown", play);
-      canvas.addEventListener("touchstart", play, { passive: true });
-
-      canvas.addEventListener("mouseup", stop);
-      canvas.addEventListener("mouseleave", stop);
-      canvas.addEventListener("touchend", stop);
+      } catch {}
     };
 
-    const t = setTimeout(attach, 0);
+    const attach = (canvas: HTMLCanvasElement) => {
+      const onPointerDown = () => play();
+      const onPointerUp = () => stop();
+      const onPointerCancel = () => stop();
+      const onPointerLeave = () => stop();
+
+      canvas.addEventListener("pointerdown", onPointerDown, { passive: true });
+      window.addEventListener("pointerup", onPointerUp, { passive: true });
+      window.addEventListener("pointercancel", onPointerCancel, {
+        passive: true,
+      });
+      canvas.addEventListener("pointerleave", onPointerLeave, {
+        passive: true,
+      });
+
+      cleanupFn = () => {
+        canvas.removeEventListener("pointerdown", onPointerDown);
+        window.removeEventListener("pointerup", onPointerUp);
+        window.removeEventListener("pointercancel", onPointerCancel);
+        canvas.removeEventListener("pointerleave", onPointerLeave);
+      };
+    };
+
+    const findAndAttach = () => {
+      const canvas = host.querySelector("canvas") as HTMLCanvasElement | null;
+
+      if (canvas) {
+        attach(canvas);
+        return;
+      }
+
+      attempts += 1;
+      if (attempts < 60) {
+        raf = requestAnimationFrame(findAndAttach);
+      }
+    };
+
+    raf = requestAnimationFrame(findAndAttach);
 
     return () => {
-      clearTimeout(t);
-      ro.disconnect();
+      cancelAnimationFrame(raf);
+      cleanupFn?.();
+      stop();
     };
-  }, []);
+  }, [size?.w, size?.h]);
+
+  const ready = !!size && size.w > 10 && size.h > 10;
 
   return (
     <div
@@ -75,31 +140,44 @@ export default function ScratchCardComponent() {
       ref={hostRef}
       style={{ width: "100%", height: "100%" }}
     >
-      <ScratchCard
-        width={size.w}
-        height={size.h}
-        image="/scratch/golden-scratch.png"
-        fadeOutOnComplete={true}
-        finishPercent={93}
-        customBrush={{
-          image: "/brush/brush.png",
-          width: brushWidth,
-          height: brushHeight,
-        }}
-        onComplete={() => console.log("complete")}
-      >
-        <div
-          style={{
-            display: "flex",
-            width: "100%",
-            height: "100%",
-            alignItems: "center",
-            justifyContent: "center",
+      {!ready ? null : (
+        <ScratchCard
+          key={`${size.w}x${size.h}`}
+          width={size.w}
+          height={size.h}
+          image="/scratch/golden-scratch.png"
+          fadeOutOnComplete={true}
+          finishPercent={93}
+          customBrush={{
+            image: "/brush/brush.png",
+            width: brushWidth,
+            height: brushHeight,
+          }}
+          onComplete={() => {
+            const a = audioRef.current;
+            if (a) {
+              try {
+                a.pause();
+                a.currentTime = 0;
+              } catch {}
+            }
+            isScratchingRef.current = false;
+            console.log("complete");
           }}
         >
-          <Image src={"/cat.gif"} width={300} height={300} alt="You Won!" />
-        </div>
-      </ScratchCard>
+          <div
+            style={{
+              display: "flex",
+              width: "100%",
+              height: "100%",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Image src={"/cat.gif"} width={300} height={300} alt="You Won!" />
+          </div>
+        </ScratchCard>
+      )}
     </div>
   );
 }
