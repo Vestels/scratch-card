@@ -2,6 +2,7 @@
 
 import ScratchCard from "react-scratchcard-v4";
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 
 export default function ScratchCardComponent() {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -96,7 +97,7 @@ export default function ScratchCardComponent() {
             justifyContent: "center",
           }}
         >
-          <img className="xd" src="https://thumb-cdn77.xvideos-cdn.com/e7d7d525-2419-4e83-962d-72a7f9d0b151/0/xv_12_p.jpg" alt="You Won!" />
+          <Image src={"/cat.gif"} width={300} height={300} alt="You Won!" />
         </div>
       </ScratchCard>
     </div>
