@@ -1,0 +1,9 @@
+@use "sass:math";
+
+// exchange px to rem unit
+@function toRem($px) {
+  @if math.unit($px) != "px" {
+    @error "use 'px' suffix with integer";
+  }
+  @return math.div($px, 16px) * 1rem;
+}

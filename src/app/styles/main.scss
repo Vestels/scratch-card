@@ -1,0 +1,28 @@
+@use "@/styles/forwarder" as *;
+
+main {
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 60px;
+
+  .ticket-container {
+    position: relative;
+    padding: 0 16px;
+    user-select: none !important;
+    cursor:
+      url("/cursor/coin-60.png") 0 0,
+      auto !important;
+
+    .ticket {
+      width: min(1200px, 110%);
+      height: auto;
+      display: block;
+      user-select: none !important;
+    }
+  }
+}

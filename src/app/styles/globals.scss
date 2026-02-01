@@ -1,0 +1,60 @@
+@use "@/styles/forwarder" as *;
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+  padding: 0;
+  margin: 0;
+  hyphens: auto;
+}
+
+html,
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  max-width: 100vw;
+  max-width: 100dvw;
+  overflow-x: hidden;
+}
+
+body {
+  color: var(--text-color-01);
+  background-color: var(--main-color-01);
+  display: flex;
+  justify-content: center;
+  font-size: 100%; // 1rem (16px)
+  font-weight: 400;
+  line-height: 130%;
+  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+  box-sizing: border-box;
+  scroll-behavior: smooth;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  line-height: normal;
+  font-weight: normal;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img,
+picture,
+video,
+canvas,
+svg {
+  max-width: 100%;
+  display: block;
+  height: auto;
+}
