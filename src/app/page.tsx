@@ -14,7 +14,7 @@ export default function Home() {
           height={300}
           draggable={false}
           alt=""
-          priority={true}
+          priority
         />
 
         <div className="scratch-slot">
